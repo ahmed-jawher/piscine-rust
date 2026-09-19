@@ -67,7 +67,7 @@ pub struct Card {
     pub rank: Rank,
 }
 
-pub fn winner_card(card: Card) -> bool {
+pub fn winner_card(card: &Card) -> bool {
     matches!((card.suit, card.rank), (Suit::Spade, Rank::Ace))
 }
 
@@ -110,7 +110,7 @@ mod tests {
             suit: Suit::Spade,
             rank: Rank::Ace,
         };
-        assert!(winner_card(card));
+        assert!(winner_card(&card));
     }
 
     #[test]
@@ -119,7 +119,7 @@ mod tests {
             suit: Suit::Heart,
             rank: Rank::Ace,
         };
-        assert!(!winner_card(card));
+        assert!(!winner_card(&card));
     }
 
     #[test]
