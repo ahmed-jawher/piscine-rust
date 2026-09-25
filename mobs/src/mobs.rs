@@ -3,8 +3,8 @@ pub mod member;
 
 use std::collections::{HashMap, HashSet};
 
-use boss::Boss;
-use member::{Member, Role};
+pub use boss::Boss;
+pub use member::{Member, Role};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mob {
