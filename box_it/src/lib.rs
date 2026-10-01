@@ -1,20 +1,16 @@
-pub fn transform_and_save_on_heap(s: String) -> Box<Vec<u32>> {
-    let numbers: Vec<u32> = s
-        .split_whitespace()
+pub fn parse_into_boxed(s: String) -> Vec<Box<u32>> {
+    s.split_whitespace()
         .map(|num_str| {
-            if num_str.ends_with('k') {
-                let without_k = num_str.trim_end_matches('k');
-                let num_value = without_k.parse::<f32>().unwrap();
-                (num_value * 1000.0) as u32
+            let value = if let Some(without_k) = num_str.strip_suffix('k') {
+                without_k.parse::<f64>().unwrap() * 1000.0
             } else {
-                num_str.parse::<f32>().unwrap() as u32
-            }
+                num_str.parse::<f64>().unwrap()
+            };
+            Box::new(value.round() as u32)
         })
-        .collect();
-
-    Box::new(numbers)
+        .collect()
 }
 
-pub fn take_value_ownership(a: Box<Vec<u32>>) -> Vec<u32> {
-    *a
+pub fn into_unboxed(a: Vec<Box<u32>>) -> Vec<u32> {
+    a.into_iter().map(|b| *b).collect()
 }
