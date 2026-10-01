@@ -7,9 +7,26 @@ pub type Link = Option<Box<Worker>>;
 
 #[derive(Debug)]
 pub struct Worker {
-    pub role: String,
+    pub role: Role,
     pub name: String,
     pub next: Link,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Role {
+    CEO,
+    Manager,
+    Worker,
+}
+
+impl From<&str> for Role {
+    fn from(s: &str) -> Role {
+        match s {
+            "CEO" => Role::CEO,
+            "Manager" => Role::Manager,
+            _ => Role::Worker,
+        }
+    }
 }
 
 impl WorkEnvironment {
@@ -17,10 +34,10 @@ impl WorkEnvironment {
         WorkEnvironment { grade: None }
     }
 
-    pub fn add_worker(&mut self, role: String, name: String) {
+    pub fn add_worker(&mut self, name: &str, role: &str) {
         let new_worker = Worker {
-            role,
-            name,
+            role: Role::from(role),
+            name: name.to_owned(),
             next: self.grade.take(),
         };
 
@@ -30,19 +47,17 @@ impl WorkEnvironment {
     pub fn remove_worker(&mut self) -> Option<String> {
         match self.grade.take() {
             Some(first_worker) => {
-                let removed_name = first_worker.name.clone();
-
                 self.grade = first_worker.next;
 
-                Some(removed_name)
+                Some(first_worker.name)
             }
             None => None,
         }
     }
 
-    pub fn last_worker(&self) -> Option<(String, String)> {
+    pub fn last_worker(&self) -> Option<(String, Role)> {
         match &self.grade {
-            Some(worker) => Some((worker.name.clone(), worker.role.clone())),
+            Some(worker) => Some((worker.name.clone(), worker.role)),
             None => None,
         }
     }
