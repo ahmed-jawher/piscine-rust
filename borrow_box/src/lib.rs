@@ -7,36 +7,27 @@ pub struct GameSession {
 }
 
 impl GameSession {
-    pub fn new(id: u32, p1_name: String, p2_name: String, nb_games: u16) -> Box<GameSession> {
-        Box::new(GameSession {
+    pub fn new(id: u32, p1_name: String, p2_name: String, nb_games: u16) -> GameSession {
+        GameSession {
             id,
             p1: (p1_name, 0),
             p2: (p2_name, 0),
             nb_games,
-        })
+        }
     }
 
-    pub fn read_winner(&self) -> (String, u16) {
-        let (p1_name, p1_score) = &self.p1;
-        let (p2_name, p2_score) = &self.p2;
-
-        if p1_score > p2_score {
-            (p1_name.clone(), *p1_score)
-        } else if p2_score > p1_score {
-            (p2_name.clone(), *p2_score)
+    pub fn read_winner(&self) -> Option<&(String, u16)> {
+        if self.p1.1 > self.p2.1 {
+            Some(&self.p1)
+        } else if self.p2.1 > self.p1.1 {
+            Some(&self.p2)
         } else {
-            (String::from("Same score! tied"), *p1_score)
+            None
         }
     }
 
-    pub fn update_score(&mut self, user_name: String) {
+    pub fn update_score(&mut self, user_name: &str) {
         if self.is_game_finished() {
-            return;
-        }
-
-        let total_games_played = self.p1.1 + self.p2.1;
-
-        if total_games_played >= self.nb_games {
             return;
         }
 
@@ -52,22 +43,10 @@ impl GameSession {
     }
 
     fn is_game_finished(&self) -> bool {
-        let (_, p1_score) = self.p1;
-        let (_, p2_score) = self.p2;
+        let (p1_score, p2_score) = (self.p1.1, self.p2.1);
 
-        if p1_score >= 3 || p2_score >= 3 {
-            return true;
-        }
-
-        let total_games_played = p1_score + p2_score;
-        let remaining_games = self.nb_games - total_games_played;
-
-        if (p1_score > p2_score && p1_score - p2_score > remaining_games)
-            || (p2_score > p1_score && p2_score - p1_score > remaining_games)
-        {
-            return true;
-        }
-
-        false
+        p1_score + p2_score >= self.nb_games
+            || p1_score * 2 > self.nb_games
+            || p2_score * 2 > self.nb_games
     }
 }
