@@ -1,32 +1,42 @@
-mod messenger;
-use std::collections::HashMap;
-pub use crate::messenger::*;
-pub use std::cell::RefCell;
-pub struct Worker{
-    pub track_value: Rc<usize>,
-    pub mapped_messages: RefCell<HashMap<String, String>>,
-    pub all_messages: RefCell<Vec<String>>,
+use std::cell::RefCell;
+use std::rc::Rc;
+
+pub struct Tracker {
+    pub messages: RefCell<Vec<String>>,
+    value: RefCell<usize>,
+    max: usize,
 }
-impl Worker {
-    pub fn new(value: usize) -> Worker {
-        Worker { 
-            track_value: Rc::new(value), 
-            mapped_messages: RefCell::new(HashMap::new()), 
-            all_messages: RefCell::new(Vec::new()),
+
+impl Tracker {
+    pub fn new(max: usize) -> Self {
+        Tracker {
+            messages: RefCell::new(Vec::new()),
+            value: RefCell::new(0),
+            max,
         }
     }
-}
-impl Logger for Worker {
-    fn warning(&self, msg: &str) {
-        self.all_messages.borrow_mut().push(String::from(msg));
-        self.mapped_messages.borrow_mut().insert("Warning".to_string(), msg[9..].to_string());
+
+    pub fn set_value(&self, value: &Rc<usize>) {
+        let count = Rc::strong_count(value);
+        *self.value.borrow_mut() = count;
+        let percentage = count * 100 / self.max;
+
+        if percentage >= 100 {
+            self.messages
+                .borrow_mut()
+                .push("Error: You can't go over your quota!".to_owned());
+        } else if percentage >= 70 {
+            self.messages.borrow_mut().push(format!(
+                "Warning: You have used up over {}% of your quota!",
+                percentage
+            ));
+        }
     }
-    fn error(&self, msg: &str) {
-        self.all_messages.borrow_mut().push(String::from(msg));
-        self.mapped_messages.borrow_mut().insert("Error".to_string(), msg[7..].to_string());
-    }
-    fn info(&self, msg: &str) {
-        self.all_messages.borrow_mut().push(String::from(msg));
-        self.mapped_messages.borrow_mut().insert("Info".to_string(), msg[6..].to_string());
+
+    pub fn peek(&self, value: &Rc<usize>) {
+        let percentage = Rc::strong_count(value) * 100 / self.max;
+        self.messages
+            .borrow_mut()
+            .push(format!("Info: This value would use {}% of your quota", percentage));
     }
 }
