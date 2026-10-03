@@ -2,7 +2,7 @@ use std::cmp::{Ord, Ordering};
 use std::fmt::{self, Debug};
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub enum Antigen {
     A,
     AB,
@@ -10,13 +10,13 @@ pub enum Antigen {
     O,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum RhFactor {
     Positive,
     Negative,
 }
 
-#[derive(PartialEq, Eq, PartialOrd)]
+#[derive(PartialEq, Eq, PartialOrd, Clone, Copy, Hash)]
 pub struct BloodType {
     pub antigen: Antigen,
     pub rh_factor: RhFactor,
@@ -93,7 +93,7 @@ impl Debug for BloodType {
 }
 
 impl BloodType {
-    pub fn can_receive_from(&self, other: &Self) -> bool {
+    pub fn can_receive_from(&self, other: Self) -> bool {
         // Check RH factor compatibility
         if matches!(self.rh_factor, RhFactor::Negative) && matches!(other.rh_factor, RhFactor::Positive) {
             return false;
@@ -119,7 +119,7 @@ impl BloodType {
                     antigen: antigen.clone(),
                     rh_factor: rh_factor.clone(),
                 };
-                if self.can_receive_from(&blood_type) {
+                if self.can_receive_from(blood_type) {
                     donors.push(blood_type);
                 }
             }
@@ -139,7 +139,7 @@ impl BloodType {
                     antigen: antigen.clone(),
                     rh_factor: rh_factor.clone(),
                 };
-                if blood_type.can_receive_from(self) {
+                if blood_type.can_receive_from(*self) {
                     recipients.push(blood_type);
                 }
             }
