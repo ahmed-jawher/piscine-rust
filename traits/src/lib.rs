@@ -1,12 +1,12 @@
 use std::fmt;
 
 #[derive(Debug)]
-pub struct Player {
-    pub name: String,
+pub struct Player<'a> {
+    pub name: &'a str,
     pub strength: f64,
     pub score: i32,
     pub money: i32,
-    pub weapons: Vec<String>,
+    pub weapons: Vec<&'a str>,
 }
 
 pub struct Fruit {
@@ -18,7 +18,7 @@ pub struct Meat {
     pub fat_content: f64,
 }
 
-impl Player {
+impl Player<'_> {
     pub fn eat<T: Food>(&mut self, food: T) {
         self.strength += food.gives();
     }
@@ -42,7 +42,7 @@ impl Food for Meat {
     }
 }
 
-impl fmt::Display for Player {
+impl fmt::Display for Player<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{}", self.name)?;
         writeln!(f, "Strength: {}, Score: {}, Money: {}", self.strength, self.score, self.money)?;
