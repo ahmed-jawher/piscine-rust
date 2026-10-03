@@ -21,7 +21,7 @@ impl Tracker {
         *self.value.borrow_mut() = count;
         let percentage = count * 100 / self.max;
 
-        if percentage >= 100 {
+        if percentage > 100 {
             self.messages
                 .borrow_mut()
                 .push("Error: You can't go over your quota!".to_owned());
