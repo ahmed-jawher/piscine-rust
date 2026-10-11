@@ -1,20 +1,9 @@
-pub fn get_products(arr: Vec<usize>) -> Vec<usize> {
-    if arr.is_empty() {
-        return Vec::new();
-    }
-    if arr.len() == 1 {
-        return vec![];
-    }
-
-    let mut result = Vec::new();
-    for i in 0..arr.len() {
-        let mut product = 1;
-        for j in 0..arr.len() {
-            if i != j {
-                product *= arr[j];
-            }
-        }
-        result.push(product);
-    }
-    result
+pub fn get_products<const N: usize>(arr: [usize; N]) -> [usize; N] {
+    std::array::from_fn(|i| {
+        arr.iter()
+            .enumerate()
+            .filter(|&(j, _)| j != i)
+            .map(|(_, &v)| v)
+            .product()
+    })
 }
