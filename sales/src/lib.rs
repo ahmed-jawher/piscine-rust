@@ -1,58 +1,48 @@
-#[derive(Debug, Clone, PartialEq)]
-pub struct Store {
-    pub products: Vec<(String, f32)>,
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Item<'a>(pub &'a str, pub f64);
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Store<'a, const N: usize> {
+    pub products: [Item<'a>; N],
 }
-impl Store {
-    pub fn new(products: Vec<(String, f32)>) -> Store {
+
+impl<'a, const N: usize> Store<'a, N> {
+    pub fn new(products: [Item<'a>; N]) -> Self {
         Store { products }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cart {
-    // expected public fields
-    pub items: Vec<(String, f32)>,
-    pub receipt: Vec<f32>,
-}
-impl Cart {
-    pub fn new() -> Cart {
-        Cart {
-            items: Vec::<(String, f32)>::new(),
-            receipt: Vec::<f32>::new(),
-        }
-    }
-    pub fn insert_item(&mut self, s: &Store, ele: String) {
-        for i in s.products.iter() {
-            if i.0 == ele {
-                self.items.push(i.clone());
-            }
-        }
-    }
-
-    pub fn generate_receipt(&mut self) -> Vec<f32> {
-        let mut res = Vec::<f32>::new();
-        for i in &self.items {
-            res.push(i.1);
-        }
-        res.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let third = res.len() / 3;
-        let res_sum: f32 = res.iter().sum();
-        let mut res_sum2: f32 = 0.0;
-        for i in 0..third {
-            res_sum2 += res[i];
-        }
-        for i in 0..res.len() {
-            res[i] = two_decimals(res[i] - res[i] / (res_sum) * res_sum2)
-                .parse::<f32>()
-                .unwrap();
-        }
-        for i in &res {
-            self.receipt.push(*i);
-        }
-        res
-    }
+pub struct Cart<'a> {
+    pub items: Vec<Item<'a>>,
 }
 
-fn two_decimals(fl: f32) -> String {
-    format!("{:.02}", fl)
+impl<'a> Cart<'a> {
+    pub fn new() -> Self {
+        Cart { items: Vec::new() }
+    }
+
+    pub fn insert_item_by_name<const N: usize>(
+        &mut self,
+        s: &Store<'a, N>,
+        name: &str,
+    ) -> Result<(), ()> {
+        let item = s.products.iter().find(|item| item.0 == name).ok_or(())?;
+        self.items.push(*item);
+        Ok(())
+    }
+
+    pub fn generate_receipt(&self) -> Vec<f64> {
+        let mut prices: Vec<f64> = self.items.iter().map(|item| item.1).collect();
+        prices.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        let total: f64 = prices.iter().sum();
+        let free: f64 = prices.iter().take(prices.len() / 3).sum();
+        let ratio = if total == 0.0 { 1.0 } else { (total - free) / total };
+
+        prices
+            .iter()
+            .map(|p| (p * ratio * 100.0).round() / 100.0)
+            .collect()
+    }
 }
