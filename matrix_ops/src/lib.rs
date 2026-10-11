@@ -1,75 +1,47 @@
+pub use matrix::{Matrix, Scalar};
+use std::ops::{Add, Mul, Sub};
 
-pub use matrix::Matrix;
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub struct Wrapper<const W: usize, const H: usize, T>(pub Matrix<W, H, T>);
 
-pub trait Scalar:
-std::ops::Add<Output = Self>
-+ std::ops::Sub<Output = Self>
-+ std::ops::Mul<Output = Self>
-+ std::ops::Div<Output = Self>
-+ std::clone::Clone
-+ Sized
+impl<const W: usize, const H: usize, T> From<[[T; W]; H]> for Wrapper<W, H, T> {
+    fn from(arr: [[T; W]; H]) -> Self {
+        Wrapper(Matrix(arr))
+    }
+}
+
+impl<const W: usize, const H: usize, T: Copy + Add<Output = T>> Add for Wrapper<W, H, T> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let (a, b) = (self.0 .0, other.0 .0);
+        Wrapper(Matrix(std::array::from_fn(|i| {
+            std::array::from_fn(|j| a[i][j] + b[i][j])
+        })))
+    }
+}
+
+impl<const W: usize, const H: usize, T: Copy + Sub<Output = T>> Sub for Wrapper<W, H, T> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        let (a, b) = (self.0 .0, other.0 .0);
+        Wrapper(Matrix(std::array::from_fn(|i| {
+            std::array::from_fn(|j| a[i][j] - b[i][j])
+        })))
+    }
+}
+
+impl<const S: usize, T> Mul for Wrapper<S, S, T>
+where
+    T: Scalar<Item = T> + Copy + Add<Output = T> + Mul<Output = T>,
 {
-    type Item;
-    fn zero() -> Self::Item;
-    fn one() -> Self::Item;
-}
+    type Output = Self;
 
-impl Scalar for u32 {
-    type Item = u32;
-    fn zero() -> Self::Item {
-        0
-    }
-    fn one() -> Self::Item {
-        1
-    }
-}
-
-impl Scalar for u64 {
-    type Item = u64;
-    fn zero() -> Self::Item {
-        0
-    }
-    fn one() -> Self::Item {
-        1
-    }
-}
-
-impl Scalar for i32 {
-    type Item = i32;
-    fn zero() -> Self::Item {
-        0
-    }
-    fn one() -> Self::Item {
-        1
-    }
-}
-
-impl Scalar for i64 {
-    type Item = i64;
-    fn zero() -> Self::Item {
-        0
-    }
-    fn one() -> Self::Item {
-        1
-    }
-}
-
-impl Scalar for f32 {
-    type Item = f32;
-    fn zero() -> Self::Item {
-        0.0
-    }
-    fn one() -> Self::Item {
-        1.0
-    }
-}
-
-impl Scalar for f64 {
-    type Item = f64;
-    fn zero() -> Self::Item {
-        0.0
-    }
-    fn one() -> Self::Item {
-        1.0
+    fn mul(self, other: Self) -> Self {
+        let (a, b) = (self.0 .0, other.0 .0);
+        Wrapper(Matrix(std::array::from_fn(|i| {
+            std::array::from_fn(|j| (0..S).fold(T::zero(), |acc, k| acc + a[i][k] * b[k][j]))
+        })))
     }
 }
