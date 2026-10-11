@@ -13,117 +13,66 @@ pub enum RomanDigit {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RomanNumber(pub Vec<RomanDigit>, pub u32);
+pub struct RomanNumber(pub Vec<RomanDigit>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct RomanValue {
-    value: u32,
-    digit1: RomanDigit,
-    digit2: Option<RomanDigit>,
-}
+const VALUES: [(u32, &[RomanDigit]); 13] = [
+    (1000, &[M]),
+    (900, &[C, M]),
+    (500, &[D]),
+    (400, &[C, D]),
+    (100, &[C]),
+    (90, &[X, C]),
+    (50, &[L]),
+    (40, &[X, L]),
+    (10, &[X]),
+    (9, &[I, X]),
+    (5, &[V]),
+    (4, &[I, V]),
+    (1, &[I]),
+];
 
-impl From<u32> for RomanDigit {
-    fn from(num: u32) -> Self {
-        match num {
-            1 => RomanDigit::I,
-            5 => RomanDigit::V,
-            10 => RomanDigit::X,
-            50 => RomanDigit::L,
-            100 => RomanDigit::C,
-            500 => RomanDigit::D,
-            1000 => RomanDigit::M,
-            _ => RomanDigit::Nulla,
+impl RomanDigit {
+    fn value(self) -> u32 {
+        match self {
+            Nulla => 0,
+            I => 1,
+            V => 5,
+            X => 10,
+            L => 50,
+            C => 100,
+            D => 500,
+            M => 1000,
         }
     }
 }
 
 impl From<u32> for RomanNumber {
     fn from(mut num: u32) -> Self {
-        let initial_num = num;
-
+        if num == 0 {
+            return RomanNumber(vec![Nulla]);
+        }
         let mut digits = Vec::new();
-
-        let values = [
-            RomanValue {
-                value: 1000,
-                digit1: RomanDigit::M,
-                digit2: None,
-            },
-            RomanValue {
-                value: 900,
-                digit1: RomanDigit::C,
-                digit2: Some(RomanDigit::M),
-            },
-            RomanValue {
-                value: 500,
-                digit1: RomanDigit::D,
-                digit2: None,
-            },
-            RomanValue {
-                value: 400,
-                digit1: RomanDigit::C,
-                digit2: Some(RomanDigit::D),
-            },
-            RomanValue {
-                value: 100,
-                digit1: RomanDigit::C,
-                digit2: None,
-            },
-            RomanValue {
-                value: 90,
-                digit1: RomanDigit::X,
-                digit2: Some(RomanDigit::C),
-            },
-            RomanValue {
-                value: 50,
-                digit1: RomanDigit::L,
-                digit2: None,
-            },
-            RomanValue {
-                value: 40,
-                digit1: RomanDigit::X,
-                digit2: Some(RomanDigit::L),
-            },
-            RomanValue {
-                value: 10,
-                digit1: RomanDigit::X,
-                digit2: None,
-            },
-            RomanValue {
-                value: 9,
-                digit1: RomanDigit::I,
-                digit2: Some(RomanDigit::X),
-            },
-            RomanValue {
-                value: 5,
-                digit1: RomanDigit::V,
-                digit2: None,
-            },
-            RomanValue {
-                value: 4,
-                digit1: RomanDigit::I,
-                digit2: Some(RomanDigit::V),
-            },
-            RomanValue {
-                value: 1,
-                digit1: RomanDigit::I,
-                digit2: None,
-            },
-        ];
-
-        for value in values.iter() {
-            while num >= value.value {
-                digits.push(value.digit1);
-
-                if let Some(digit2) = value.digit2 {
-                    digits.push(digit2);
-                }
-
-                num -= value.value;
+        for (value, symbols) in VALUES {
+            while num >= value {
+                digits.extend_from_slice(symbols);
+                num -= value;
             }
         }
+        RomanNumber(digits)
+    }
+}
 
-        RomanNumber(digits, initial_num)
+impl From<&RomanNumber> for u32 {
+    fn from(number: &RomanNumber) -> Self {
+        let values: Vec<u32> = number.0.iter().map(|d| d.value()).collect();
+        values
+            .iter()
+            .enumerate()
+            .map(|(i, &v)| match values.get(i + 1) {
+                Some(&next) if next > v => -(v as i64),
+                _ => v as i64,
+            })
+            .sum::<i64>() as u32
     }
 }
 
@@ -131,11 +80,8 @@ impl Iterator for RomanNumber {
     type Item = RomanNumber;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.1 += 1;
-
-        let new_digits = RomanNumber::from(self.1).0;
-        self.0 = new_digits.clone();
-
-        Some(RomanNumber(new_digits, self.1))
+        let current = u32::from(&*self);
+        *self = RomanNumber::from(current + 1);
+        Some(self.clone())
     }
 }
