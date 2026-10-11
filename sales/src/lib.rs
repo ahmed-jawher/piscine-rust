@@ -7,7 +7,7 @@ pub struct Store<'a, const N: usize> {
 }
 
 impl<'a, const N: usize> Store<'a, N> {
-    pub fn new(products: [Item<'a>; N]) -> Self {
+    pub const fn new(products: [Item<'a>; N]) -> Self {
         Store { products }
     }
 }
@@ -18,7 +18,7 @@ pub struct Cart<'a> {
 }
 
 impl<'a> Cart<'a> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Cart { items: Vec::new() }
     }
 
